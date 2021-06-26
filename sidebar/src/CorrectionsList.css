@@ -1,7 +1,6 @@
 .corrections-list {
   list-style: none;
-  padding: 5px;
-  background: rgb(244, 244, 244);
+  padding: 0 5px;
 }
 
 .correction-card {

@@ -1,11 +1,16 @@
+const webpack = require('webpack');
+const dotenv = require('dotenv');
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const path = require('path');
+
+dotenv.config();
 
 module.exports = {
   entry: "./src/bootstrap.js",
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "./src/bootstrap.js",
+    publicPath: process.env.PUBLIC_PATH,
   },
   module: {
     rules: [
@@ -32,6 +37,14 @@ module.exports = {
   },
   mode: "development",
   plugins: [
-    new CopyWebpackPlugin(['static/index.html'])
+    new CopyWebpackPlugin(['static/index.html']),
+    new webpack.EnvironmentPlugin(['PUBLIC_PATH'])
   ],
+  devServer: {
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Allow-Methods': '*',
+    },
+  },
 };

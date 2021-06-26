@@ -1,123 +1,146 @@
-import CodeMirror, {MarkerRange} from 'codemirror';
-import 'codemirror/addon/display/placeholder.js';
-import 'codemirror/lib/codemirror.css';
+import {
+  AcrolinxPlugin,
+  AcrolinxSidebar,
+  Check,
+  CheckedDocumentRange,
+  CheckOptions,
+  InitParameters,
+  InvalidDocumentPart,
+  Message,
+  SidebarConfiguration
+} from '@acrolinx/sidebar-interface';
 import {createSignal, onMount, Show} from 'solid-js';
 import {render} from 'solid-js/web';
 import './App.css';
 import {CorrectionsList} from './CorrectionsList';
 import './index.css';
+import {createMessageAdapter} from './message-adapter';
 import {Correction} from './nlprule-webworker';
 
-const DEMO_TEXT = [
-  'She was not been here since Monday.',
-  'Its a lonely week.',
-  'This week is longer then before.'
-].join('\n');
+function loadWorker() {
+  const urlSearchParams = new URLSearchParams(location.search);
 
+  if (urlSearchParams.get('acrolinxUseMessageApi') === 'true' || !(window as any).acrolinxPlugin) {
+    console.log('Message Mode');
+    return new Worker(new URL('./nlprule-webworker.ts', import.meta.url));
+  } else {
+    // https://stackoverflow.com/questions/25458104/can-should-html5-web-workers-use-cors-for-cross-origin
+    // https://benohead.com/blog/2017/12/06/cross-domain-cross-browser-web-workers/
+    const blob = new Blob([
+        `importScripts('${process.env.PUBLIC_PATH}src/src_nlprule-webworker_ts.bootstrap.js');`
+      ],
+      {'type': 'application/javascript'});
+    return new Worker(URL.createObjectURL(blob))
+  }
+}
 
-const nlpruleWorker = new Worker(new URL('./nlprule-webworker.ts', import.meta.url));
+const nlpruleWorker = loadWorker();
 
 function App() {
   const [removedCorrectionIDs, setRemovedCorrectionIDs] = createSignal(new Set<string>());
   const [corrections, setCorrections] = createSignal<Correction[]>([]);
   const [isChecking, setIsChecking] = createSignal(true);
   const [selectedCorrectionId, setSelectedCorrectionId] = createSignal<string | undefined>(undefined);
-  let codeMirror: CodeMirror.Editor;
 
-  let codeMirrorContainer!: HTMLDivElement;
+  let currentDocumentContent = '';
+
+  const acrolinxSidebar: AcrolinxSidebar = {
+    checkGlobal(documentContent: string, _options: CheckOptions): Check {
+      currentDocumentContent = documentContent;
+      nlpruleWorker.postMessage({text: documentContent});
+      return {checkId: 'dummyCheckId'};
+    },
+
+    configure(configuration: SidebarConfiguration): void {
+    },
+
+    init(initParameters: InitParameters): void {
+      console.log('initParameters', initParameters);
+    },
+
+    invalidateRanges(invalidCheckedDocumentRanges: InvalidDocumentPart[]): void {
+    },
+
+    onGlobalCheckRejected(): void {
+    },
+
+    onVisibleRangesChanged(checkedDocumentRanges: CheckedDocumentRange[]): void {
+    },
+
+    showMessage(message: Message): void {
+    }
+  }
+
+  const acrolinxPlugin: AcrolinxPlugin = (window as any).acrolinxPlugin || createMessageAdapter();
+  (window as any).acrolinxSidebar = acrolinxSidebar;
+  acrolinxPlugin.requestInit();
 
   function checkTextInput() {
     console.log('Start Check');
     setIsChecking(true);
-    nlpruleWorker.postMessage({text: codeMirror.getValue()});
+    acrolinxPlugin.requestGlobalCheck();
   }
 
   function onCheckResult(corrections: Correction[]) {
     setRemovedCorrectionIDs(new Set());
     setCorrections(corrections);
-
-    for (const textMarker of codeMirror.getAllMarks()) {
-      textMarker.clear();
-    }
-
-    for (const correction of corrections) {
-      const textMarker = codeMirror.markText(
-        codeMirror.posFromIndex(correction.span.char.start),
-        codeMirror.posFromIndex(correction.span.char.end),
-        {
-          className: 'correction-marker',
-          attributes: {id: correction.id}
-        }
-      );
-      textMarker.on('beforeCursorEnter', () => {
-        setSelectedCorrectionId(correction.id);
-      })
-    }
+    acrolinxPlugin.onCheckResult({
+      checkedPart: {checkId: 'dummyCheckId', range: [0, currentDocumentContent.length]}
+    });
   }
 
   onMount(() => {
     nlpruleWorker.onmessage = ({data: {eventType, corrections}}) => {
       switch (eventType) {
         case 'loaded':
-          checkTextInput();
+          setIsChecking(false);
+          acrolinxPlugin.onInitFinished({});
           return
         case 'checkFinished':
           setIsChecking(false);
           onCheckResult(corrections);
       }
     };
-
-    codeMirror = CodeMirror(codeMirrorContainer, {
-      lineNumbers: true,
-      lineWrapping: true,
-      placeholder: 'Type here!',
-      extraKeys: {Tab: false}
-    });
-    codeMirror.setValue(DEMO_TEXT);
-    codeMirror.focus();
   });
 
   function selectCorrection(correction: Correction) {
     setSelectedCorrectionId(correction.id);
-    const marking = codeMirror.getAllMarks().find(it => it.attributes?.id === correction.id);
-    if (marking) {
-      const markerRange = marking.find() as MarkerRange;
-      codeMirror.setSelection(markerRange.from, markerRange.to);
-    }
+    acrolinxPlugin.selectRanges('dummyCheckId', [{
+      content: correction.issueText,
+      extractedRange: [correction.span.char.start, correction.span.char.end],
+      range: [correction.span.char.start, correction.span.char.end]
+    }]);
   }
 
   function replaceCorrection(correction: Correction, replacement: string) {
-    const marking = codeMirror.getAllMarks().find(it => it.attributes?.id === correction.id);
-    if (marking) {
-      const markerRange = marking.find() as MarkerRange;
-      codeMirror.setSelection(markerRange.from, markerRange.to);
-      codeMirror.replaceRange(replacement, markerRange.from, markerRange.to)
-      marking.clear();
-      setRemovedCorrectionIDs(new Set(removedCorrectionIDs()).add(correction.id));
-    }
+    acrolinxPlugin.replaceRanges('dummyCheckId', [{
+      content: correction.issueText,
+      extractedRange: [correction.span.char.start, correction.span.char.end],
+      range: [correction.span.char.start, correction.span.char.end],
+      replacement: replacement,
+    }]);
+    setRemovedCorrectionIDs(new Set(removedCorrectionIDs()).add(correction.id));
   }
 
   return (
-    <main>
-      <Show when={isChecking()}>
-        <div id="loadingSpinner" class="lds-dual-ring"/>
-      </Show>
-
-      <div id="leftColumn">
-        <h2>Input Text</h2>
-        <div id="codeMirrorContainer" ref={codeMirrorContainer}></div>
-      </div>
-
-      <div id="rightColumn">
-        <h2>Corrections <button
+    <>
+      <header>
+        <button
           id="checkButton"
           disabled={isChecking()}
           onClick={(event) => {
             checkTextInput();
           }}
-        >Check</button>
-        </h2>
-        <Show when={corrections().length > 0} fallback={isChecking() ? 'Checking...' : 'No problems found.'}>
+        >Check
+        </button>
+      </header>
+
+      <main>
+        <Show when={isChecking()}>
+          <div id="loadingSpinner" class="lds-dual-ring"/>
+        </Show>
+
+        <Show when={corrections().length > 0}>
           <CorrectionsList
             corrections={corrections()}
             selectCorrection={selectCorrection}
@@ -126,8 +149,8 @@ function App() {
             removedCorrectionIDs={removedCorrectionIDs()}
           />
         </Show>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
 
