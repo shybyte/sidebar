@@ -13,9 +13,11 @@ import {createSignal, onMount, Show} from 'solid-js';
 import {render} from 'solid-js/web';
 import './App.css';
 import {CorrectionsList} from './CorrectionsList';
+import {ExtractionResult, extractTextFromHtml} from './html-extraction';
 import './index.css';
 import {createMessageAdapter} from './message-adapter';
-import {Correction} from './nlprule-webworker';
+import {Correction, Range} from './nlprule-webworker';
+import {mapExtractedRangeToOriginal} from './range-mapping';
 
 function loadWorker() {
   const urlSearchParams = new URLSearchParams(location.search);
@@ -42,12 +44,14 @@ function App() {
   const [isChecking, setIsChecking] = createSignal(true);
   const [selectedCorrectionId, setSelectedCorrectionId] = createSignal<string | undefined>(undefined);
 
-  let currentDocumentContent = '';
+  let extractionResult: ExtractionResult;
 
   const acrolinxSidebar: AcrolinxSidebar = {
-    checkGlobal(documentContent: string, _options: CheckOptions): Check {
-      currentDocumentContent = documentContent;
-      nlpruleWorker.postMessage({text: documentContent});
+    checkGlobal(documentContent: string, options: CheckOptions): Check {
+      extractionResult = options.inputFormat === 'HTML'
+        ? extractTextFromHtml(documentContent)
+        : {text: documentContent};
+      nlpruleWorker.postMessage({text: extractionResult.text});
       return {checkId: 'dummyCheckId'};
     },
 
@@ -85,7 +89,7 @@ function App() {
     setRemovedCorrectionIDs(new Set());
     setCorrections(corrections);
     acrolinxPlugin.onCheckResult({
-      checkedPart: {checkId: 'dummyCheckId', range: [0, currentDocumentContent.length]}
+      checkedPart: {checkId: 'dummyCheckId', range: [0, extractionResult.text.length]}
     });
   }
 
@@ -103,12 +107,25 @@ function App() {
     };
   });
 
+
+  function calculateOriginalRange(range: Range): [number, number] {
+    if (extractionResult.mappedOffsetRanges) {
+      const mappedOffsetRange = mapExtractedRangeToOriginal(extractionResult.mappedOffsetRanges, {
+        begin: range.start,
+        end: range.end
+      });
+      return [mappedOffsetRange[0].original.begin, mappedOffsetRange[mappedOffsetRange.length - 1].original.end];
+    } else {
+      return [range.start, range.end];
+    }
+  }
+
   function selectCorrection(correction: Correction) {
     setSelectedCorrectionId(correction.id);
     acrolinxPlugin.selectRanges('dummyCheckId', [{
       content: correction.issueText,
       extractedRange: [correction.span.char.start, correction.span.char.end],
-      range: [correction.span.char.start, correction.span.char.end]
+      range: calculateOriginalRange(correction.span.char)
     }]);
   }
 
@@ -116,7 +133,7 @@ function App() {
     acrolinxPlugin.replaceRanges('dummyCheckId', [{
       content: correction.issueText,
       extractedRange: [correction.span.char.start, correction.span.char.end],
-      range: [correction.span.char.start, correction.span.char.end],
+      range: calculateOriginalRange(correction.span.char),
       replacement: replacement,
     }]);
     setRemovedCorrectionIDs(new Set(removedCorrectionIDs()).add(correction.id));
