@@ -38,7 +38,7 @@ module.exports = {
   mode: "development",
   plugins: [
     new CopyWebpackPlugin(['static/index.html']),
-    new webpack.EnvironmentPlugin(['PUBLIC_PATH'])
+    new webpack.EnvironmentPlugin(['PUBLIC_PATH', 'GITHUB_RUN_NUMBER'])
   ],
   devServer: {
     headers: {

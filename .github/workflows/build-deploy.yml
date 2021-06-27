@@ -27,6 +27,7 @@ jobs:
         run: |
           npm i
           npm run test
+          echo BuildNumber: $GITHUB_RUN_NUMBER
           npm run build
 
       - name: Upload production-ready build files
