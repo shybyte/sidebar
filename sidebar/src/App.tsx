@@ -49,7 +49,10 @@ function App() {
   const acrolinxSidebar: AcrolinxSidebar = {
     checkGlobal(documentContent: string, options: CheckOptions): Check {
       console.log('checkGlobal', documentContent, options);
-      extractionResult = options.inputFormat === 'HTML'
+      extractionResult = (
+        options.inputFormat === 'HTML' ||
+        (documentContent.startsWith('<!DOCTYPE browserHtmlAcrolinx') && options.inputFormat === 'AUTO')
+      )
         ? extractTextFromHtml(documentContent)
         : {text: documentContent};
       nlpruleWorker.postMessage({text: extractionResult.text});
@@ -172,7 +175,6 @@ function App() {
     </>
   );
 }
-
 
 export function renderApp() {
   render(() => <App/>, document.getElementById('app')!);
