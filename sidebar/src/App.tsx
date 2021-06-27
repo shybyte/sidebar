@@ -48,10 +48,12 @@ function App() {
 
   const acrolinxSidebar: AcrolinxSidebar = {
     checkGlobal(documentContent: string, options: CheckOptions): Check {
+      console.log('checkGlobal', documentContent, options);
       extractionResult = options.inputFormat === 'HTML'
         ? extractTextFromHtml(documentContent)
         : {text: documentContent};
       nlpruleWorker.postMessage({text: extractionResult.text});
+      console.log('extractionResult', extractionResult);
       return {checkId: 'dummyCheckId'};
     },
 
