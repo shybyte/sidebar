@@ -26,6 +26,7 @@ jobs:
           PUBLIC_PATH: https://shybyte.github.io/sidebar/v14/
         run: |
           npm i
+          npm run test
           npm run build
 
       - name: Upload production-ready build files
