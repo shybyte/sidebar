@@ -53,7 +53,8 @@ function CorrectionCard(props: CorrectionCardProps) {
           {replacement =>
             <li
               title="Replace with suggestions"
-              onClick={() => {
+              onClick={(event) => {
+                event.stopPropagation();
                 props.replaceCorrection(props.correction, replacement);
               }}>
               {replacement}
