@@ -276,7 +276,7 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpac
   \**************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _App__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./App */ \"./src/App.tsx\");\n\n(0,_App__WEBPACK_IMPORTED_MODULE_0__.renderApp)();\n\n//# sourceURL=webpack://nlprule-wasm-webworker-example-solidjs/./src/bootstrap.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _App__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./App */ \"./src/App.tsx\");\n\nconsole.log(`Starting Sidebar build number ${\"3\"} ...`);\n(0,_App__WEBPACK_IMPORTED_MODULE_0__.renderApp)();\n\n//# sourceURL=webpack://nlprule-wasm-webworker-example-solidjs/./src/bootstrap.js?");
 
 /***/ }),
 
