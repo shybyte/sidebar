@@ -46,5 +46,6 @@ module.exports = {
       'Access-Control-Allow-Headers': '*',
       'Access-Control-Allow-Methods': '*',
     },
+    hot: true,
   },
 };

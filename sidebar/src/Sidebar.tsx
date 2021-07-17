@@ -9,15 +9,19 @@ import {
   Message,
   SidebarConfiguration
 } from '@acrolinx/sidebar-interface';
-import {createSignal, onMount, Show} from 'solid-js';
+import {createSignal, For, onMount, Show} from 'solid-js';
 import {render} from 'solid-js/web';
-import './App.css';
+import {AppPage} from './AppPage';
+import {AppsManager} from './AppsManager';
+import {CheckIcon} from './components/CheckIcon'
+import {ExtensionIcon} from './components/ExtensionIcon';
 import {CorrectionsList} from './CorrectionsList';
 import {ExtractionResult, extractTextFromHtml} from './html-extraction';
 import './index.css';
 import {createMessageAdapter} from './message-adapter';
 import {Correction, Range} from './nlprule-webworker';
 import {mapExtractedRangeToOriginal} from './range-mapping';
+import './Sidebar.css';
 
 function loadWorker() {
   const urlSearchParams = new URLSearchParams(location.search);
@@ -38,11 +42,27 @@ function loadWorker() {
 
 const nlpruleWorker = loadWorker();
 
-function App() {
+enum Tabs {
+  CorrectionsList = 'corrections',
+  AppsManager = 'appManager'
+}
+
+interface App {
+  id: string;
+  url: string;
+}
+
+
+function Sidebar() {
   const [removedCorrectionIDs, setRemovedCorrectionIDs] = createSignal(new Set<string>());
   const [corrections, setCorrections] = createSignal<Correction[]>([]);
   const [isChecking, setIsChecking] = createSignal(true);
   const [selectedCorrectionId, setSelectedCorrectionId] = createSignal<string | undefined>(undefined);
+  const [selectedTab, setSelectedTab] = createSignal<string>(Tabs.CorrectionsList);
+  const [apps, setApps] = createSignal<App[]>([
+    {id: 'text-extraction', url: 'https://acrolinx.github.io/app-sdk-js/examples/text-extraction/'}
+  ]);
+
 
   let extractionResult: ExtractionResult;
 
@@ -145,37 +165,81 @@ function App() {
   }
 
   return (
-    <>
+    <div class="sidebar">
       <header>
-        <button
-          id="checkButton"
-          disabled={isChecking()}
-          onClick={(event) => {
-            checkTextInput();
-          }}
-        >Check
-        </button>
+        <div class={'tabs'}>
+          <button
+            onClick={() => {
+              setSelectedTab(Tabs.CorrectionsList)
+            }}
+            aria-selected={selectedTab() === Tabs.CorrectionsList}
+            title="Corrections"
+          ><CheckIcon/></button>
+          <For each={apps()}>
+            {app => <button
+              onClick={() => {
+                setSelectedTab(app.id)
+              }}
+              aria-selected={selectedTab() === app.id}
+              title={app.url}
+            ><img src={app.url + 'acrolinx-app-icon.svg'} alt=""/></button>}
+          </For>
+          <button
+            onClick={() => {
+              setSelectedTab(Tabs.AppsManager)
+            }}
+            aria-selected={selectedTab() === Tabs.AppsManager}
+            title="Add & Manage Apps"
+          ><ExtensionIcon/></button>
+        </div>
+
+        <Show when={selectedTab() === Tabs.CorrectionsList}>
+          <div class="check-button-section">
+            <button
+              id="checkButton"
+              disabled={isChecking()}
+              onClick={(event) => {
+                checkTextInput();
+              }}
+            >Check
+            </button>
+          </div>
+
+        </Show>
       </header>
+
 
       <main>
         <Show when={isChecking()}>
           <div id="loadingSpinner" class="lds-dual-ring"/>
         </Show>
 
-        <Show when={corrections().length > 0}>
-          <CorrectionsList
-            corrections={corrections()}
-            selectCorrection={selectCorrection}
-            replaceCorrection={replaceCorrection}
-            selectedCorrectionId={selectedCorrectionId()}
-            removedCorrectionIDs={removedCorrectionIDs()}
-          />
-        </Show>
+
+        <div class={'tab-panel'} style={{display: selectedTab() === Tabs.CorrectionsList ? 'block' : 'none'}}>
+          <Show when={corrections().length > 0}>
+            <CorrectionsList
+              corrections={corrections()}
+              selectCorrection={selectCorrection}
+              replaceCorrection={replaceCorrection}
+              selectedCorrectionId={selectedCorrectionId()}
+              removedCorrectionIDs={removedCorrectionIDs()}
+            />
+          </Show>
+        </div>
+        <For each={apps()}>
+          {app =>
+            <div class={'tab-panel app-tab-panel'} style={{display: selectedTab() === app.id ? 'block' : 'none'}}>
+              <AppPage url={app.url}/>
+            </div>}
+        </For>
+        <div class={'tab-panel'} style={{display: selectedTab() === Tabs.AppsManager ? 'block' : 'none'}}>
+          <AppsManager addApp={(url) => setApps(apps().concat({id: Date.now() + '', url}))}/>
+        </div>
       </main>
-    </>
+    </div>
   );
 }
 
 export function renderApp() {
-  render(() => <App/>, document.getElementById('app')!);
+  render(() => <Sidebar/>, document.getElementById('app')!);
 }
