@@ -11,6 +11,7 @@ import {
 } from '@acrolinx/sidebar-interface';
 import {createSignal, For, onMount, Show} from 'solid-js';
 import {render} from 'solid-js/web';
+import {App, loadApps, saveApps} from './app-storage';
 import {AppPage} from './AppPage';
 import {AppsManager} from './AppsManager';
 import {CheckIcon} from './components/CheckIcon'
@@ -47,22 +48,13 @@ enum Tabs {
   AppsManager = 'appManager'
 }
 
-interface App {
-  id: string;
-  url: string;
-}
-
-
 function Sidebar() {
   const [removedCorrectionIDs, setRemovedCorrectionIDs] = createSignal(new Set<string>());
   const [corrections, setCorrections] = createSignal<Correction[]>([]);
   const [isChecking, setIsChecking] = createSignal(true);
   const [selectedCorrectionId, setSelectedCorrectionId] = createSignal<string | undefined>(undefined);
   const [selectedTab, setSelectedTab] = createSignal<string>(Tabs.CorrectionsList);
-  const [apps, setApps] = createSignal<App[]>([
-    {id: 'text-extraction', url: 'https://acrolinx.github.io/app-sdk-js/examples/text-extraction/'}
-  ]);
-
+  const [apps, setApps] = createSignal<App[]>(loadApps());
 
   let extractionResult: ExtractionResult;
 
@@ -164,6 +156,18 @@ function Sidebar() {
     setRemovedCorrectionIDs(new Set(removedCorrectionIDs()).add(correction.id));
   }
 
+  function addApp(url: string) {
+    const newApps = apps().concat({url});
+    saveApps(newApps);
+    setApps(newApps);
+  }
+
+  function removeApp(url: string) {
+    const newApps = apps().filter(app => app.url !== url);
+    saveApps(newApps);
+    setApps(newApps);
+  }
+
   return (
     <div class="sidebar">
       <header>
@@ -178,9 +182,9 @@ function Sidebar() {
           <For each={apps()}>
             {app => <button
               onClick={() => {
-                setSelectedTab(app.id)
+                setSelectedTab(app.url)
               }}
-              aria-selected={selectedTab() === app.id}
+              aria-selected={selectedTab() === app.url}
               title={app.url}
             ><img src={app.url + 'acrolinx-app-icon.svg'} alt=""/></button>}
           </For>
@@ -228,12 +232,12 @@ function Sidebar() {
         </div>
         <For each={apps()}>
           {app =>
-            <div class={'tab-panel app-tab-panel'} style={{display: selectedTab() === app.id ? 'block' : 'none'}}>
+            <div class={'tab-panel app-tab-panel'} style={{display: selectedTab() === app.url ? 'block' : 'none'}}>
               <AppPage url={app.url}/>
             </div>}
         </For>
         <div class={'tab-panel'} style={{display: selectedTab() === Tabs.AppsManager ? 'block' : 'none'}}>
-          <AppsManager addApp={(url) => setApps(apps().concat({id: Date.now() + '', url}))}/>
+          <AppsManager apps={apps()} addApp={addApp} removeApp={removeApp} />
         </div>
       </main>
     </div>
