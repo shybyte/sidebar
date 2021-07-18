@@ -56,6 +56,8 @@ function Sidebar() {
   const [selectedTab, setSelectedTab] = createSignal<string>(Tabs.CorrectionsList);
   const [apps, setApps] = createSignal<App[]>(loadApps());
 
+  const [extractedText, setExtractedText] = createSignal('');
+
   let extractionResult: ExtractionResult;
 
   const acrolinxSidebar: AcrolinxSidebar = {
@@ -67,6 +69,7 @@ function Sidebar() {
       )
         ? extractTextFromHtml(documentContent)
         : {text: documentContent};
+      setExtractedText(extractionResult.text);
       nlpruleWorker.postMessage({text: extractionResult.text});
       console.log('extractionResult', extractionResult);
       return {checkId: 'dummyCheckId'};
@@ -197,7 +200,7 @@ function Sidebar() {
           ><ExtensionIcon/></button>
         </div>
 
-        <Show when={selectedTab() === Tabs.CorrectionsList}>
+        <Show when={selectedTab() !== Tabs.AppsManager}>
           <div class="check-button-section">
             <button
               id="checkButton"
@@ -233,7 +236,7 @@ function Sidebar() {
         <For each={apps()}>
           {app =>
             <div class={'tab-panel app-tab-panel'} style={{display: selectedTab() === app.url ? 'block' : 'none'}}>
-              <AppPage url={app.url}/>
+              <AppPage url={app.url} extractedText={extractedText()}/>
             </div>}
         </For>
         <div class={'tab-panel'} style={{display: selectedTab() === Tabs.AppsManager ? 'block' : 'none'}}>
