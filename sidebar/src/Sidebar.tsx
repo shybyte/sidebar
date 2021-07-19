@@ -10,10 +10,12 @@ import {
   SidebarConfiguration
 } from '@acrolinx/sidebar-interface';
 import {createSignal, For, onMount, Show} from 'solid-js';
+import {createStore, produce} from 'solid-js/store';
 import {render} from 'solid-js/web';
-import {App, loadApps, saveApps} from './app-storage';
-import {AppPage} from './AppPage';
-import {AppsManager} from './AppsManager';
+import {loadApps, saveApps} from './apps/app-storage';
+import {AppPage} from './apps/AppPage';
+import {AnalysisType, App, AppConfig} from './apps/apps';
+import {AppsManager} from './apps/AppsManager';
 import {CheckIcon} from './components/CheckIcon'
 import {ExtensionIcon} from './components/ExtensionIcon';
 import {CorrectionsList} from './CorrectionsList';
@@ -54,7 +56,7 @@ function Sidebar() {
   const [isChecking, setIsChecking] = createSignal(true);
   const [selectedCorrectionId, setSelectedCorrectionId] = createSignal<string | undefined>(undefined);
   const [selectedTab, setSelectedTab] = createSignal<string>(Tabs.CorrectionsList);
-  const [apps, setApps] = createSignal<App[]>(loadApps());
+  const [appsStore, setAppsStore] = createStore<{ apps: App[] }>({apps: loadApps()});
 
   const [extractedText, setExtractedText] = createSignal('');
 
@@ -160,15 +162,28 @@ function Sidebar() {
   }
 
   function addApp(url: string) {
-    const newApps = apps().concat({url});
-    saveApps(newApps);
-    setApps(newApps);
+    setAppsStore('apps', apps => apps.concat({url}))
+    saveApps(appsStore.apps);
   }
 
   function removeApp(url: string) {
-    const newApps = apps().filter(app => app.url !== url);
-    saveApps(newApps);
-    setApps(newApps);
+    setAppsStore('apps', apps => apps.filter(app => app.url !== url))
+    saveApps(appsStore.apps);
+  }
+
+  function setAppConfig(url: string, appConfig: AppConfig) {
+    setAppsStore('apps', it => it.url === url, produce((app: App) => {
+      app.appConfig = appConfig;
+    }));
+    saveApps(appsStore.apps);
+  }
+
+  function selectedApp() {
+    return appsStore.apps.find(it => it.url === selectedTab());
+  }
+
+  function needsCheckButton() {
+    return selectedTab() === Tabs.CorrectionsList || selectedApp()?.appConfig?.requiredReportContent.includes(AnalysisType.extractedText);
   }
 
   return (
@@ -182,13 +197,13 @@ function Sidebar() {
             aria-selected={selectedTab() === Tabs.CorrectionsList}
             title="Corrections"
           ><CheckIcon/></button>
-          <For each={apps()}>
+          <For each={appsStore.apps}>
             {app => <button
               onClick={() => {
                 setSelectedTab(app.url)
               }}
               aria-selected={selectedTab() === app.url}
-              title={app.url}
+              title={app.appConfig?.title || app.url}
             ><img src={app.url + 'acrolinx-app-icon.svg'} alt=""/></button>}
           </For>
           <button
@@ -200,7 +215,8 @@ function Sidebar() {
           ><ExtensionIcon/></button>
         </div>
 
-        <Show when={selectedTab() !== Tabs.AppsManager}>
+        <Show
+          when={needsCheckButton()}>
           <div class="check-button-section">
             <button
               id="checkButton"
@@ -208,7 +224,8 @@ function Sidebar() {
               onClick={(event) => {
                 checkTextInput();
               }}
-            >Check
+              title={selectedApp()?.appConfig?.button?.tooltip || 'Check your text for problems.'}
+            >{selectedApp()?.appConfig?.button?.text || 'Check'}
             </button>
           </div>
 
@@ -233,14 +250,18 @@ function Sidebar() {
             />
           </Show>
         </div>
-        <For each={apps()}>
+        <For each={appsStore.apps}>
           {app =>
             <div class={'tab-panel app-tab-panel'} style={{display: selectedTab() === app.url ? 'block' : 'none'}}>
-              <AppPage url={app.url} extractedText={extractedText()}/>
+              <AppPage
+                url={app.url}
+                extractedText={extractedText()}
+                setAppConfig={setAppConfig}
+              />
             </div>}
         </For>
         <div class={'tab-panel'} style={{display: selectedTab() === Tabs.AppsManager ? 'block' : 'none'}}>
-          <AppsManager apps={apps()} addApp={addApp} removeApp={removeApp} />
+          <AppsManager apps={appsStore.apps} addApp={addApp} removeApp={removeApp}/>
         </div>
       </main>
     </div>

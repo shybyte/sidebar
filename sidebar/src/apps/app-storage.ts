@@ -1,6 +1,4 @@
-export interface App {
-  url: string;
-}
+import {App} from './apps';
 
 const STORE_KEY = 'wribe.sidebar.apps';
 

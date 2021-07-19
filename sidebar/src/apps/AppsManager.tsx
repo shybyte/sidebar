@@ -1,5 +1,5 @@
 import {For} from 'solid-js'
-import {App} from './app-storage';
+import {App} from './apps';
 
 export interface AppsManagerProps {
   apps: App[];
