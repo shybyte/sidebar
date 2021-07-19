@@ -15,6 +15,7 @@ export type ReportsForApp = {
 
 export const AppMessages = unionize({
   openWindow: ofType<{ url: string }>(),
+  requestAppAccessToken: ofType<{}>(),
   configureAddon: ofType<{ config: AppConfig }>(),
   selectRanges: ofType<SelectRangesMessage>(),
   replaceRanges: ofType<ReplaceRangesMessage>(),

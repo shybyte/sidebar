@@ -11,8 +11,12 @@ export interface AppPageProps {
 export function AppPage(props: AppPageProps) {
   let iFrame!: HTMLIFrameElement;
 
+  function sendMessageToApp(message: any) {
+    iFrame.contentWindow!.postMessage(message, '*');
+  }
+
   createEffect(() => {
-    if (props.extractedText && iFrame.contentWindow) {
+    if (props.extractedText) {
       const analysisResult: AnalysisResult = {
         type: 'analysisResult',
         languageId: 'en',
@@ -23,8 +27,7 @@ export function AppPage(props: AppPageProps) {
           }
         }
       };
-      console.warn('analysisResult', analysisResult);
-      iFrame.contentWindow.postMessage(analysisResult, '*');
+      sendMessageToApp(analysisResult);
     }
   });
 
@@ -49,6 +52,16 @@ export function AppPage(props: AppPageProps) {
       },
       selectRanges() {},
       replaceRanges() {},
+      requestAppAccessToken() {
+        sendMessageToApp({
+          type: 'appAccessToken',
+          appAccessToken: 'dummyAccessToken',
+          validationRequest: {
+            url: location.href.slice(0, location.href.lastIndexOf('/')) + '/app-api-current-user.json',
+            headers: {}
+          }
+        })
+      }
     });
   }
 

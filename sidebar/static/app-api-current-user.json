@@ -1,0 +1,19 @@
+{
+  "links": {},
+  "data": {
+    "user": {
+      "id": "8e695f7c-e8dd-11eb-9a03-0242ac130003",
+      "username": "dummy-user@acrolinx.com",
+      "createdOn": null,
+      "activeTokenId": null,
+      "lastIntegrationAccess": null,
+      "licenseType": null,
+      "licenseStatus": "inactive",
+      "checkingFrequency": null,
+      "roles": []
+    },
+    "privileges": [
+      "admin"
+    ]
+  }
+}
