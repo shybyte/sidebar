@@ -1,0 +1,20 @@
+.appList {
+  list-style: none;
+  padding: 0 5px;
+}
+
+.appCard {
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.2);
+  border-radius: 7px;
+  margin: 15px 5px;
+  padding: 10px;
+  background: white;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.5s;
+}
+
+.appCard h3 {
+  margin-top: 0px;
+  font-size: 1em;
+}

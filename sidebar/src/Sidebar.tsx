@@ -9,7 +9,7 @@ import {
   Message,
   SidebarConfiguration
 } from '@acrolinx/sidebar-interface';
-import {createSignal, For, onMount, Show} from 'solid-js';
+import {createEffect, createSignal, For, onMount, Show} from 'solid-js';
 import {createStore, produce} from 'solid-js/store';
 import {render} from 'solid-js/web';
 import {loadApps, saveApps} from './apps/app-storage';
@@ -61,9 +61,13 @@ function Sidebar() {
   const [isCheckerInitialized, setCheckerInitialized] = createSignal(false);
   const [isChecking, setIsChecking] = createSignal(false);
   const [selectedCorrectionId, setSelectedCorrectionId] = createSignal<string | undefined>(undefined);
-  const [selectedTab, setSelectedTab] = createSignal<string>(Tabs.CorrectionsList);
+  const [selectedTab, setSelectedTab] = createSignal<string>(localStorage.getItem('wribe.sidebar.apps.selectedTab') || Tabs.CorrectionsList);
   const [appsStore, setAppsStore] = createStore<{ apps: App[] }>({apps: loadApps()});
   const [extractionEvent, setExtractionEvent] = createSignal<ExtractionEvent>();
+
+  createEffect(() => {
+    localStorage.setItem('wribe.sidebar.apps.selectedTab', selectedTab());
+  })
 
   const acrolinxSidebar: AcrolinxSidebar = {
     checkGlobal(documentContent: string, options: CheckOptions): Check {
@@ -229,7 +233,7 @@ function Sidebar() {
           <div class="check-button-section">
             <button
               id="checkButton"
-              disabled={isChecking() || (selectedTab() === Tabs.CorrectionsList && !isCheckerInitialized()) }
+              disabled={isChecking() || (selectedTab() === Tabs.CorrectionsList && !isCheckerInitialized())}
               onClick={(event) => {
                 checkTextInput();
               }}

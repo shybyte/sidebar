@@ -1,7 +1,7 @@
 Doing:
+* Beautify AppManager
 
 TODO:
-* Beautify AppManager
 * Implement App Range Select/Replace
 * Language Detection
 * App Store

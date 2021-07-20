@@ -1,5 +1,6 @@
 import {For} from 'solid-js'
 import {App} from './apps';
+import styles from './AppsManager.module.css';
 
 export interface AppsManagerProps {
   apps: App[];
@@ -20,11 +21,11 @@ export function AppsManager(props: AppsManagerProps) {
       <button>Add App</button>
     </form>
 
-    <ul>
+    <ul className={styles.appList}>
       <For each={props.apps}>
         {app =>
-          <li>
-            <h3>{app.url}</h3>
+          <li className={styles.appCard}>
+            <h3>{app.appConfig?.title || app.url}</h3>
             <button onClick={() => {
               props.removeApp(app.url);
             }}>Remove
