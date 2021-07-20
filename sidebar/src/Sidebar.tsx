@@ -50,30 +50,38 @@ enum Tabs {
   AppsManager = 'appManager'
 }
 
+interface ExtractionEvent {
+  tab: string;
+  result: ExtractionResult;
+}
+
 function Sidebar() {
   const [removedCorrectionIDs, setRemovedCorrectionIDs] = createSignal(new Set<string>());
   const [corrections, setCorrections] = createSignal<Correction[]>([]);
-  const [isChecking, setIsChecking] = createSignal(true);
+  const [isCheckerInitialized, setCheckerInitialized] = createSignal(false);
+  const [isChecking, setIsChecking] = createSignal(false);
   const [selectedCorrectionId, setSelectedCorrectionId] = createSignal<string | undefined>(undefined);
   const [selectedTab, setSelectedTab] = createSignal<string>(Tabs.CorrectionsList);
   const [appsStore, setAppsStore] = createStore<{ apps: App[] }>({apps: loadApps()});
-
-  const [extractedText, setExtractedText] = createSignal('');
-
-  let extractionResult: ExtractionResult;
+  const [extractionEvent, setExtractionEvent] = createSignal<ExtractionEvent>();
 
   const acrolinxSidebar: AcrolinxSidebar = {
     checkGlobal(documentContent: string, options: CheckOptions): Check {
       console.log('checkGlobal', documentContent, options);
-      extractionResult = (
+      const extractionResult = (
         options.inputFormat === 'HTML' ||
         (documentContent.startsWith('<!DOCTYPE browserHtmlAcrolinx') && options.inputFormat === 'AUTO')
       )
         ? extractTextFromHtml(documentContent)
         : {text: documentContent};
-      setExtractedText(extractionResult.text);
-      nlpruleWorker.postMessage({text: extractionResult.text});
       console.log('extractionResult', extractionResult);
+      setExtractionEvent({result: extractionResult, tab: selectedTab()});
+
+      if (selectedTab() === Tabs.CorrectionsList) {
+        nlpruleWorker.postMessage({text: extractionResult.text});
+      } else {
+        setIsChecking(false);
+      }
       return {checkId: 'dummyCheckId'};
     },
 
@@ -111,7 +119,7 @@ function Sidebar() {
     setRemovedCorrectionIDs(new Set());
     setCorrections(corrections);
     acrolinxPlugin.onCheckResult({
-      checkedPart: {checkId: 'dummyCheckId', range: [0, extractionResult.text.length]}
+      checkedPart: {checkId: 'dummyCheckId', range: [0, extractionEvent()!.result.text.length]}
     });
   }
 
@@ -119,7 +127,7 @@ function Sidebar() {
     nlpruleWorker.onmessage = ({data: {eventType, corrections}}) => {
       switch (eventType) {
         case 'loaded':
-          setIsChecking(false);
+          setCheckerInitialized(true);
           acrolinxPlugin.onInitFinished({});
           return
         case 'checkFinished':
@@ -131,7 +139,8 @@ function Sidebar() {
 
 
   function calculateOriginalRange(range: Range): [number, number] {
-    if (extractionResult.mappedOffsetRanges) {
+    const extractionResult = extractionEvent()?.result;
+    if (extractionResult?.mappedOffsetRanges) {
       const mappedOffsetRange = mapExtractedRangeToOriginal(extractionResult.mappedOffsetRanges, {
         begin: range.start,
         end: range.end
@@ -220,7 +229,7 @@ function Sidebar() {
           <div class="check-button-section">
             <button
               id="checkButton"
-              disabled={isChecking()}
+              disabled={isChecking() || (selectedTab() === Tabs.CorrectionsList && !isCheckerInitialized()) }
               onClick={(event) => {
                 checkTextInput();
               }}
@@ -234,7 +243,7 @@ function Sidebar() {
 
 
       <main>
-        <Show when={isChecking()}>
+        <Show when={!isCheckerInitialized() || isChecking()}>
           <div id="loadingSpinner" class="lds-dual-ring"/>
         </Show>
 
@@ -255,7 +264,7 @@ function Sidebar() {
             <div class={'tab-panel app-tab-panel'} style={{display: selectedTab() === app.url ? 'block' : 'none'}}>
               <AppPage
                 url={app.url}
-                extractedText={extractedText()}
+                extractedText={extractionEvent()?.tab === app.url ? extractionEvent()?.result.text : undefined}
                 setAppConfig={setAppConfig}
               />
             </div>}
