@@ -13,6 +13,7 @@ import {createEffect, createSignal, For, onMount, Show} from 'solid-js';
 import {createStore, produce} from 'solid-js/store';
 import {render} from 'solid-js/web';
 import {loadApps, saveApps} from './apps/app-storage';
+import {AppIcon} from './apps/AppIcon';
 import {AppPage} from './apps/AppPage';
 import {AnalysisType, App, AppConfig} from './apps/apps';
 import {AppsManager} from './apps/AppsManager';
@@ -175,7 +176,7 @@ function Sidebar() {
   }
 
   function addApp(url: string) {
-    setAppsStore('apps', apps => apps.concat({url}))
+    setAppsStore('apps', apps => apps.concat({url, enabled: true}))
     saveApps(appsStore.apps);
   }
 
@@ -191,8 +192,19 @@ function Sidebar() {
     saveApps(appsStore.apps);
   }
 
+  function setAppEnabled(url: string, enabled: boolean) {
+    setAppsStore('apps', it => it.url === url, produce((app: App) => {
+      app.enabled = enabled;
+    }));
+    saveApps(appsStore.apps);
+  }
+
   function selectedApp() {
     return appsStore.apps.find(it => it.url === selectedTab());
+  }
+
+  function enabledApps() {
+    return appsStore.apps.filter(app => app.enabled);
   }
 
   function needsCheckButton() {
@@ -210,14 +222,14 @@ function Sidebar() {
             aria-selected={selectedTab() === Tabs.CorrectionsList}
             title="Corrections"
           ><CheckIcon/></button>
-          <For each={appsStore.apps}>
+          <For each={enabledApps()}>
             {app => <button
               onClick={() => {
                 setSelectedTab(app.url)
               }}
               aria-selected={selectedTab() === app.url}
               title={app.appConfig?.title || app.url}
-            ><img src={app.url + 'acrolinx-app-icon.svg'} alt=""/></button>}
+            ><AppIcon appUrl={app.url}/></button>}
           </For>
           <button
             onClick={() => {
@@ -263,7 +275,7 @@ function Sidebar() {
             />
           </Show>
         </div>
-        <For each={appsStore.apps}>
+        <For each={enabledApps()}>
           {app =>
             <div class={'tab-panel app-tab-panel'} style={{display: selectedTab() === app.url ? 'block' : 'none'}}>
               <AppPage
@@ -274,7 +286,7 @@ function Sidebar() {
             </div>}
         </For>
         <div class={'tab-panel'} style={{display: selectedTab() === Tabs.AppsManager ? 'block' : 'none'}}>
-          <AppsManager apps={appsStore.apps} addApp={addApp} removeApp={removeApp}/>
+          <AppsManager apps={appsStore.apps} addApp={addApp} removeApp={removeApp} setAppEnabled={setAppEnabled}/>
         </div>
       </main>
     </div>

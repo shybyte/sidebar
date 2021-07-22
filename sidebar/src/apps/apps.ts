@@ -70,4 +70,5 @@ export const APP_COMMAND_PREFIX = 'acrolinx.sidebar.';
 export interface App {
   url: string;
   appConfig?: AppConfig;
+  enabled: boolean;
 }

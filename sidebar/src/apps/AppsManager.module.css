@@ -9,12 +9,22 @@
   margin: 15px 5px;
   padding: 10px;
   background: white;
-  cursor: pointer;
   user-select: none;
   transition: all 0.5s;
 }
 
 .appCard h3 {
+  display: flex;
   margin-top: 0px;
   font-size: 1em;
+}
+
+.appCard h3 img {
+  margin-right: 0.4em;
+}
+
+
+.appCardBottom {
+  display: flex;
+  justify-content: space-between;
 }

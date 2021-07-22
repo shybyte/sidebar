@@ -10,6 +10,7 @@
     "build": "webpack --config webpack.config.js",
     "start": "webpack-dev-server",
     "tcm": "tcm -p 'src/**/*.module.css'",
+    "tcm:watch": "tcm -w -p 'src/**/*.module.css'",
     "test": "jest --watchAll=false --coverage"
   },
   "repository": {
