@@ -1,5 +1,6 @@
 Doing:
 * Beautify AppManager
+* App Store
 
 TODO:
 * Implement App Range Select/Replace

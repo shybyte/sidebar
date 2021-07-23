@@ -214,7 +214,7 @@ function Sidebar() {
   return (
     <div class="sidebar">
       <header>
-        <div class={'tabs'}>
+        <div class={'mainTabs'}>
           <button
             onClick={() => {
               setSelectedTab(Tabs.CorrectionsList)

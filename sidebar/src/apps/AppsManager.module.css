@@ -28,3 +28,33 @@
   display: flex;
   justify-content: space-between;
 }
+
+.appStoreCardBottom {
+  text-align: right;
+}
+
+.tabs {
+  display: flex;
+  justify-content: space-around;
+  background: white;
+}
+
+.tabs button {
+  background: white;
+  border: none;
+  text-transform: uppercase;
+  color: #555;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 7px;
+  flex: 1;
+}
+
+.tabs button[aria-selected="true"] {
+  color: #1976d2;
+  border-bottom: 2px #1976d2 solid;
+}
+
+.tabPanel {
+
+}

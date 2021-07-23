@@ -19,14 +19,14 @@ header {
   margin: 10px;
 }
 
-.tabs button {
+.mainTabs button {
   background: none;
   border: none;
   width: 50px;
   height: 50px;
 }
 
-.tabs button[aria-selected="true"] {
+.mainTabs button[aria-selected="true"] {
   background: #f2f2f2;
 }
 
