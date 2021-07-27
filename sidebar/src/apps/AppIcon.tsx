@@ -3,5 +3,5 @@ export interface AppIconProps {
 }
 
 export function AppIcon(props: AppIconProps) {
-  return <img src={props.appUrl + 'acrolinx-app-icon.svg'} alt=""/>;
+  return <img width={24} height={24} src={props.appUrl + 'acrolinx-app-icon.svg'} alt=""/>;
 }
