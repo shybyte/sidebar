@@ -277,7 +277,7 @@ function Sidebar() {
         </div>
         <For each={enabledApps()}>
           {app =>
-            <div class={'tab-panel app-tab-panel'} style={{display: selectedTab() === app.url ? 'block' : 'none'}}>
+            <div class={'tab-panel tab-panel-without-scrolling'} style={{display: selectedTab() === app.url ? 'block' : 'none'}}>
               <AppPage
                 url={app.url}
                 extractedText={extractionEvent()?.tab === app.url ? extractionEvent()?.result.text : undefined}
@@ -285,7 +285,7 @@ function Sidebar() {
               />
             </div>}
         </For>
-        <div class={'tab-panel'} style={{display: selectedTab() === Tabs.AppsManager ? 'block' : 'none'}}>
+        <div class={'tab-panel tab-panel-without-scrolling'} style={{display: selectedTab() === Tabs.AppsManager ? 'block' : 'none'}}>
           <AppsManager apps={appsStore.apps} addApp={addApp} removeApp={removeApp} setAppEnabled={setAppEnabled}/>
         </div>
       </main>

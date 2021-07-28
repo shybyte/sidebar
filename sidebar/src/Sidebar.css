@@ -42,6 +42,6 @@ main {
   overflow-y: auto;
 }
 
-.app-tab-panel {
+.tab-panel-without-scrolling {
   overflow: hidden;
 }

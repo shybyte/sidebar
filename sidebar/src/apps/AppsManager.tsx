@@ -18,9 +18,8 @@ enum Tabs {
 
 export function AppsManager(props: AppsManagerProps) {
   const [selectedTab, setSelectedTab] = createSignal(Tabs.MyApps);
-  let inputElement!: HTMLInputElement;
 
-  return <>
+  return <div className={styles.appsManager}>
     <div class={styles.tabs}>
       <button
         aria-selected={selectedTab() === Tabs.MyApps}
@@ -34,14 +33,14 @@ export function AppsManager(props: AppsManagerProps) {
       </button>
     </div>
 
-    <div style={{display: selectedTab() === Tabs.MyApps ? 'block' : 'none'}}>
+    <div className={styles.tabPanel} style={{display: selectedTab() === Tabs.MyApps ? 'block' : 'none'}}>
       <MyAppManager {...props}/>
     </div>
 
-    <div style={{display: selectedTab() === Tabs.AppStore ? 'block' : 'none'}}>
+    <div className={styles.tabPanel} style={{display: selectedTab() === Tabs.AppStore ? 'block' : 'none'}}>
       <AppStore {...props}/>
     </div>
-  </>;
+  </div>;
 }
 
 

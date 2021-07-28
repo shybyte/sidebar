@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "appsManager": string;
   readonly "appList": string;
   readonly "appCard": string;
   readonly "appCardBottom": string;
