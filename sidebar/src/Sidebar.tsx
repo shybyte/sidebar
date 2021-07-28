@@ -213,7 +213,7 @@ function Sidebar() {
 
   return (
     <div class="sidebar">
-      <header>
+      <header className="sidebar-header">
         <div class={'mainTabs'}>
           <button
             onClick={() => {

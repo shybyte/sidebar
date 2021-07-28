@@ -6,6 +6,8 @@ declare const styles: {
   readonly "appStoreCardBottom": string;
   readonly "tabs": string;
   readonly "tabPanel": string;
+  readonly "tabPanelWithoutScrolling": string;
+  readonly "myAppManager": string;
   readonly "appStoreAppDescription": string;
 };
 export = styles;

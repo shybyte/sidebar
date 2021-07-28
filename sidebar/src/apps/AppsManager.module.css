@@ -23,12 +23,12 @@
   display: flex;
   margin-top: 0px;
   font-size: 1em;
+  line-height: 22px;
 }
 
 .appCard h3 img {
   margin-right: 0.4em;
 }
-
 
 .appCardBottom {
   display: flex;
@@ -43,6 +43,7 @@
   display: flex;
   justify-content: space-around;
   background: white;
+  border-bottom: 1px solid #dadada;
 }
 
 .tabs button {
@@ -66,6 +67,37 @@
   overflow-y: auto;
 }
 
+.tabPanelWithoutScrolling {
+  overflow: hidden;
+}
+
+.myAppManager {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.myAppManager header {
+  background: white;
+  padding: 10px;
+  border-bottom: 1px solid #dadada;
+}
+
+.myAppManager header form {
+  display: flex;
+}
+
+.myAppManager header form input{
+  flex: 1;
+}
+
+.myAppManager .appList {
+  margin: 0px;
+  flex: 1;
+  overflow-y: auto;
+}
+
 .appStoreAppDescription {
   margin-bottom: 1em;
 }
+

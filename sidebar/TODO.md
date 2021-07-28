@@ -1,6 +1,4 @@
 Doing:
-* Beautify AppManager
-* App Store
 
 TODO:
 * Implement App Range Select/Replace
@@ -10,6 +8,8 @@ TODO:
 * Implement German Checking
 
 Done:
+* Beautify AppManager
+* App Store
 * Start only check action of current app/tab
 * Fake AppAccessToken
 

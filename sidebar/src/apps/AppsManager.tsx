@@ -33,11 +33,17 @@ export function AppsManager(props: AppsManagerProps) {
       </button>
     </div>
 
-    <div className={styles.tabPanel} style={{display: selectedTab() === Tabs.MyApps ? 'block' : 'none'}}>
+    <div
+      className={styles.tabPanel + ' ' + styles.tabPanelWithoutScrolling}
+      style={{display: selectedTab() === Tabs.MyApps ? 'block' : 'none'}}
+    >
       <MyAppManager {...props}/>
     </div>
 
-    <div className={styles.tabPanel} style={{display: selectedTab() === Tabs.AppStore ? 'block' : 'none'}}>
+    <div
+      className={styles.tabPanel}
+      style={{display: selectedTab() === Tabs.AppStore ? 'block' : 'none'}}
+    >
       <AppStore {...props}/>
     </div>
   </div>;
@@ -47,15 +53,18 @@ export function AppsManager(props: AppsManagerProps) {
 function MyAppManager(props: AppsManagerProps) {
   let inputElement!: HTMLInputElement;
 
-  return <>
-    <form onSubmit={(ev) => {
-      ev.preventDefault();
-      props.addApp(inputElement.value)
-    }}
-    >
-      <input type="text" ref={inputElement}/>
-      <button>Add App</button>
-    </form>
+  return <div className={styles.myAppManager}>
+    <header>
+      <form onSubmit={(ev) => {
+        ev.preventDefault();
+        props.addApp(inputElement.value)
+        inputElement.value = '';
+      }}
+      >
+        <input type="text" ref={inputElement} placeholder="App URL"/>
+        <button>Add App</button>
+      </form>
+    </header>
 
     <ul className={styles.appList}>
       <For each={props.apps}>
@@ -81,7 +90,7 @@ function MyAppManager(props: AppsManagerProps) {
       </For>
     </ul>
 
-  </>;
+  </div>;
 }
 
 function AppStore(props: AppsManagerProps) {
