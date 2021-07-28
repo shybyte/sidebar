@@ -15,7 +15,7 @@ import {render} from 'solid-js/web';
 import {loadApps, saveApps} from './apps/app-storage';
 import {AppIcon} from './apps/AppIcon';
 import {AppPage} from './apps/AppPage';
-import {AnalysisType, App, AppConfig} from './apps/apps';
+import {AnalysisType, App, AppConfig, AppRange, AppRangeWithReplacement} from './apps/apps';
 import {AppsManager} from './apps/AppsManager';
 import {CheckIcon} from './components/CheckIcon'
 import {ExtensionIcon} from './components/ExtensionIcon';
@@ -86,6 +86,7 @@ function Sidebar() {
         nlpruleWorker.postMessage({text: extractionResult.text});
       } else {
         setIsChecking(false);
+        sendDummyCheckResultToPlugin();
       }
       return {checkId: 'dummyCheckId'};
     },
@@ -123,6 +124,10 @@ function Sidebar() {
   function onCheckResult(corrections: Correction[]) {
     setRemovedCorrectionIDs(new Set());
     setCorrections(corrections);
+    sendDummyCheckResultToPlugin();
+  }
+
+  function sendDummyCheckResultToPlugin() {
     acrolinxPlugin.onCheckResult({
       checkedPart: {checkId: 'dummyCheckId', range: [0, extractionEvent()!.result.text.length]}
     });
@@ -163,6 +168,23 @@ function Sidebar() {
       extractedRange: [correction.span.char.start, correction.span.char.end],
       range: calculateOriginalRange(correction.span.char)
     }]);
+  }
+
+  function selectRanges(ranges: AppRange[]) {
+    acrolinxPlugin.selectRanges('dummyCheckId', ranges.map(range => ({
+      content: extractionEvent()!.result.text.slice(range.begin, range.end),
+      extractedRange: [range.begin, range.end],
+      range: calculateOriginalRange({start: range.begin, end: range.end})
+    })));
+  }
+
+  function replaceRanges(ranges: AppRangeWithReplacement[]) {
+    acrolinxPlugin.replaceRanges('dummyCheckId', ranges.map(range => ({
+      content: extractionEvent()!.result.text.slice(range.begin, range.end),
+      extractedRange: [range.begin, range.end],
+      range: calculateOriginalRange({start: range.begin, end: range.end}),
+      replacement: range.replacement
+    })));
   }
 
   function replaceCorrection(correction: Correction, replacement: string) {
@@ -281,6 +303,8 @@ function Sidebar() {
               <AppPage
                 url={app.url}
                 extractedText={extractionEvent()?.tab === app.url ? extractionEvent()?.result.text : undefined}
+                selectRanges={selectRanges}
+                replaceRanges={replaceRanges}
                 setAppConfig={setAppConfig}
               />
             </div>}

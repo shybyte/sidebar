@@ -1,10 +1,20 @@
 import {createEffect, onCleanup} from 'solid-js'
 import './AppPage.css';
-import {AnalysisResult, APP_COMMAND_PREFIX, AppConfig, AppMessage, AppMessages} from './apps';
+import {
+  AnalysisResult,
+  APP_COMMAND_PREFIX,
+  AppConfig,
+  AppMessage,
+  AppMessages,
+  AppRange, AppRangeWithReplacement, ReplaceRangesMessage,
+  SelectRangesMessage
+} from './apps';
 
 export interface AppPageProps {
   url: string;
   extractedText?: string;
+  selectRanges(ranges: AppRange[]): void;
+  replaceRanges(ranges: AppRangeWithReplacement[]): void;
   setAppConfig(url: string, appConfig: AppConfig): void;
 }
 
@@ -50,8 +60,12 @@ export function AppPage(props: AppPageProps) {
       configureAddon: ({config}) => {
         props.setAppConfig(props.url, config);
       },
-      selectRanges() {},
-      replaceRanges() {},
+      selectRanges(message: SelectRangesMessage) {
+        props.selectRanges(message.ranges);
+      },
+      replaceRanges(message: ReplaceRangesMessage) {
+        props.replaceRanges(message.ranges);
+      },
       requestAppAccessToken() {
         sendMessageToApp({
           type: 'appAccessToken',
