@@ -1,11 +1,11 @@
 Doing:
 
 TODO:
-* Implement App Range Select/Replace
+* App Range Select/Replace
 * Language Detection
-* App Store
-* Disable App
-* Implement German Checking
+* German Checking
+* Speedup checking by using a cache
+* More apps in App Store
 
 Done:
 * Beautify AppManager
