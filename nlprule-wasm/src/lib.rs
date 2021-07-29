@@ -39,6 +39,22 @@ impl NlpRuleChecker {
         NlpRuleChecker { tokenizer, rules }
     }
 
+    pub fn new_de() -> Self {
+        utils::set_panic_hook();
+
+        let tokenizer_bytes: &'static [u8] = include_bytes!("../binaries/de_tokenizer.bin");
+        let rules_bytes: &'static [u8] = include_bytes!("../binaries/de_rules.bin");
+
+        log("Init Tokenizer DE");
+        let tokenizer = Tokenizer::from_reader(tokenizer_bytes).expect("tokenizer binary is valid");
+
+        log("Init Rules DE");
+        let rules = Rules::from_reader(rules_bytes).expect("rules binary is valid");
+
+        log("NlpRuleChecker DE is ready.");
+        NlpRuleChecker { tokenizer, rules }
+    }
+
     pub fn check(&self, text: &str) -> JsValue {
         let suggestions = self.rules.suggest(text, &self.tokenizer);
         JsValue::from_serde(&suggestions).unwrap()
