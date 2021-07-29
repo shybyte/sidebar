@@ -1,11 +1,12 @@
 Doing:
 
 TODO:
+* Try to optimize by putting different languages into different webworkers
 * Speedup checking by using a cache
 * More apps in App Store
 * App Range Invalidation
 * Correction Apps
-* Try to optimize by putting different languages into different webworkers
+* Display rule help links
 
 Done:
 * German Checking
