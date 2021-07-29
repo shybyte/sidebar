@@ -42,7 +42,7 @@ function loadWorker() {
         `importScripts('${process.env.PUBLIC_PATH}src/src_nlprule-webworker_ts.bootstrap.js');`
       ],
       {'type': 'application/javascript'});
-    return new Worker(URL.createObjectURL(blob))
+    return new Worker(URL.createObjectURL(blob));
   }
 }
 
@@ -62,7 +62,6 @@ interface ExtractionEvent {
 function Sidebar() {
   const [removedCorrectionIDs, setRemovedCorrectionIDs] = createSignal(new Set<string>());
   const [corrections, setCorrections] = createSignal<Correction[]>([]);
-  const [isCheckerInitialized, setCheckerInitialized] = createSignal(false);
   const [isChecking, setIsChecking] = createSignal(false);
   const [selectedCorrectionId, setSelectedCorrectionId] = createSignal<string | undefined>(undefined);
   const [selectedTab, setSelectedTab] = createSignal<string>(localStorage.getItem('wribe.sidebar.apps.selectedTab') || Tabs.CorrectionsList);
@@ -84,14 +83,15 @@ function Sidebar() {
         : {text: documentContent};
       console.log('extractionResult', extractionResult);
 
+      const language = detectLanguage(extractionResult.text);
       setExtractionEvent({
         result: extractionResult,
         tab: selectedTab(),
-        language: detectLanguage(extractionResult.text)
+        language
       });
 
       if (selectedTab() === Tabs.CorrectionsList) {
-        nlpruleWorker.postMessage({text: extractionResult.text});
+        nlpruleWorker.postMessage({text: extractionResult.text, language: language});
       } else {
         setIsChecking(false);
         sendDummyCheckResultToPlugin();
@@ -144,15 +144,12 @@ function Sidebar() {
   onMount(() => {
     nlpruleWorker.onmessage = ({data: {eventType, corrections}}) => {
       switch (eventType) {
-        case 'loaded':
-          setCheckerInitialized(true);
-          acrolinxPlugin.onInitFinished({});
-          return
         case 'checkFinished':
           setIsChecking(false);
           onCheckResult(corrections);
       }
     };
+    acrolinxPlugin.onInitFinished({});
   });
 
 
@@ -275,7 +272,7 @@ function Sidebar() {
           <div class="check-button-section">
             <button
               id="checkButton"
-              disabled={isChecking() || (selectedTab() === Tabs.CorrectionsList && !isCheckerInitialized())}
+              disabled={isChecking()}
               onClick={(event) => {
                 checkTextInput();
               }}
@@ -289,7 +286,7 @@ function Sidebar() {
 
 
       <main>
-        <Show when={!isCheckerInitialized() || isChecking()}>
+        <Show when={isChecking()}>
           <div id="loadingSpinner" class="lds-dual-ring"/>
         </Show>
 

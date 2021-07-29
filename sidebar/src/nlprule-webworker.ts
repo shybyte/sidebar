@@ -23,13 +23,18 @@ export interface Range {
   end: number;
 }
 
+self.onmessage = onMessage;
+
 console.time('Initialize nlprule');
-const nlpRuleChecker = wasm.NlpRuleChecker.new();
+const nlpRuleCheckerEn = wasm.NlpRuleChecker.new();
+const nlpRuleCheckerDe = wasm.NlpRuleChecker.new_de();
 console.timeEnd('Initialize nlprule');
 
-self.onmessage = ({data: {text}}) => {
+function onMessage({data: {text, language}}: any) {
   console.time('Check');
-  const corrections: CorrectionFromWasm[] = nlpRuleChecker.check(text);
+  const corrections: CorrectionFromWasm[] = language === 'en'
+    ? nlpRuleCheckerEn.check(text)
+    : nlpRuleCheckerDe.check(text);
   console.timeEnd('Check');
 
   const correctionsResult: Correction[] = corrections.map((it, i) => ({
@@ -42,6 +47,4 @@ self.onmessage = ({data: {text}}) => {
     eventType: 'checkFinished',
     corrections: correctionsResult,
   });
-};
-
-self.postMessage({eventType: 'loaded'});
+}
