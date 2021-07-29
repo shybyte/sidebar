@@ -14,7 +14,7 @@ import {createStore, produce} from 'solid-js/store';
 import {render} from 'solid-js/web';
 import {loadApps, saveApps} from './apps/app-storage';
 import {AppIcon} from './apps/AppIcon';
-import {AppPage} from './apps/AppPage';
+import {AppPage, DocumentAnalysisEvent} from './apps/AppPage';
 import {AnalysisType, App, AppConfig, AppRange, AppRangeWithReplacement} from './apps/apps';
 import {AppsManager} from './apps/AppsManager';
 import {CheckIcon} from './components/CheckIcon'
@@ -22,10 +22,12 @@ import {ExtensionIcon} from './components/ExtensionIcon';
 import {CorrectionsList} from './CorrectionsList';
 import {ExtractionResult, extractTextFromHtml} from './html-extraction';
 import './index.css';
+import {detectLanguage, LanguageCodeIso1} from './language-detection';
 import {createMessageAdapter} from './message-adapter';
 import {Correction, Range} from './nlprule-webworker';
 import {mapExtractedRangeToOriginal} from './range-mapping';
 import './Sidebar.css';
+
 
 function loadWorker() {
   const urlSearchParams = new URLSearchParams(location.search);
@@ -53,6 +55,7 @@ enum Tabs {
 
 interface ExtractionEvent {
   tab: string;
+  language: LanguageCodeIso1;
   result: ExtractionResult;
 }
 
@@ -80,7 +83,12 @@ function Sidebar() {
         ? extractTextFromHtml(documentContent)
         : {text: documentContent};
       console.log('extractionResult', extractionResult);
-      setExtractionEvent({result: extractionResult, tab: selectedTab()});
+
+      setExtractionEvent({
+        result: extractionResult,
+        tab: selectedTab(),
+        language: detectLanguage(extractionResult.text)
+      });
 
       if (selectedTab() === Tabs.CorrectionsList) {
         nlpruleWorker.postMessage({text: extractionResult.text});
@@ -299,17 +307,19 @@ function Sidebar() {
         </div>
         <For each={enabledApps()}>
           {app =>
-            <div class={'tab-panel tab-panel-without-scrolling'} style={{display: selectedTab() === app.url ? 'block' : 'none'}}>
+            <div class={'tab-panel tab-panel-without-scrolling'}
+                 style={{display: selectedTab() === app.url ? 'block' : 'none'}}>
               <AppPage
                 url={app.url}
-                extractedText={extractionEvent()?.tab === app.url ? extractionEvent()?.result.text : undefined}
+                documentAnalysisEvent={getDocumentAnalysisResultFromExtractionEvent(app.url, extractionEvent())}
                 selectRanges={selectRanges}
                 replaceRanges={replaceRanges}
                 setAppConfig={setAppConfig}
               />
             </div>}
         </For>
-        <div class={'tab-panel tab-panel-without-scrolling'} style={{display: selectedTab() === Tabs.AppsManager ? 'block' : 'none'}}>
+        <div class={'tab-panel tab-panel-without-scrolling'}
+             style={{display: selectedTab() === Tabs.AppsManager ? 'block' : 'none'}}>
           <AppsManager apps={appsStore.apps} addApp={addApp} removeApp={removeApp} setAppEnabled={setAppEnabled}/>
         </div>
       </main>
@@ -319,4 +329,15 @@ function Sidebar() {
 
 export function renderApp() {
   render(() => <Sidebar/>, document.getElementById('app')!);
+}
+
+function getDocumentAnalysisResultFromExtractionEvent(appUrl: string, extractionEvent: ExtractionEvent | undefined): DocumentAnalysisEvent | undefined {
+  if (extractionEvent?.tab === appUrl) {
+    return {
+      language: extractionEvent.language,
+      extractedText: extractionEvent.result.text
+    };
+  } else {
+    return undefined;
+  }
 }

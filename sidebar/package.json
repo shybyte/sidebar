@@ -32,6 +32,7 @@
   "dependencies": {
     "@acrolinx/sidebar-interface": "^14.28.2",
     "binary-search-by": "^0.3.0",
+    "franc-min": "^5.0.0",
     "htmlparser2": "^6.1.0",
     "nlprule-wasm": "file:../nlprule-wasm/pkg",
     "solid-js": "^1.0.3",

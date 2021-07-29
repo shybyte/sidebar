@@ -1,4 +1,5 @@
 import {createEffect, onCleanup} from 'solid-js'
+import {LanguageCodeIso1} from '../language-detection';
 import './AppPage.css';
 import {
   AnalysisResult,
@@ -6,17 +7,25 @@ import {
   AppConfig,
   AppMessage,
   AppMessages,
-  AppRange, AppRangeWithReplacement, ReplaceRangesMessage,
+  AppRange,
+  AppRangeWithReplacement,
+  ReplaceRangesMessage,
   SelectRangesMessage
 } from './apps';
 
 export interface AppPageProps {
   url: string;
-  extractedText?: string;
+  documentAnalysisEvent?: DocumentAnalysisEvent;
   selectRanges(ranges: AppRange[]): void;
   replaceRanges(ranges: AppRangeWithReplacement[]): void;
   setAppConfig(url: string, appConfig: AppConfig): void;
 }
+
+export interface DocumentAnalysisEvent {
+  language: LanguageCodeIso1;
+  extractedText: string;
+}
+
 
 export function AppPage(props: AppPageProps) {
   let iFrame!: HTMLIFrameElement;
@@ -26,14 +35,14 @@ export function AppPage(props: AppPageProps) {
   }
 
   createEffect(() => {
-    if (props.extractedText) {
+    if (props.documentAnalysisEvent) {
       const analysisResult: AnalysisResult = {
         type: 'analysisResult',
-        languageId: 'en',
+        languageId: props.documentAnalysisEvent.language,
         sidebarCheckId: 'dummySidebarCheckId',
         reports: {
           extractedText: {
-            content: props.extractedText
+            content: props.documentAnalysisEvent.extractedText
           }
         }
       };
@@ -50,7 +59,10 @@ export function AppPage(props: AppPageProps) {
       return;
     }
 
-    const messageFromApp: AppMessage = {...messageEvent.data, command: messageEvent.data.command.replace(APP_COMMAND_PREFIX, '')};
+    const messageFromApp: AppMessage = {
+      ...messageEvent.data,
+      command: messageEvent.data.command.replace(APP_COMMAND_PREFIX, '')
+    };
     console.log('messageFromApp', messageFromApp);
 
     AppMessages.match(messageFromApp, {
