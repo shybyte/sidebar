@@ -27,14 +27,14 @@ import {createMessageAdapter} from './message-adapter';
 import {Correction, Range} from './nlprule-webworker';
 import {mapExtractedRangeToOriginal} from './range-mapping';
 import './Sidebar.css';
+import {waitMs} from './utils';
 
 
-function loadWorker() {
+function loadWorker(language: string) {
   const urlSearchParams = new URLSearchParams(location.search);
-
   if (urlSearchParams.get('acrolinxUseMessageApi') === 'true' || !(window as any).acrolinxPlugin) {
     console.log('Message Mode');
-    return new Worker(new URL('./nlprule-webworker.ts', import.meta.url));
+    return new Worker(new URL('./nlprule-webworker.ts', import.meta.url), {name: language});
   } else {
     // https://stackoverflow.com/questions/25458104/can-should-html5-web-workers-use-cors-for-cross-origin
     // https://benohead.com/blog/2017/12/06/cross-domain-cross-browser-web-workers/
@@ -42,11 +42,12 @@ function loadWorker() {
         `importScripts('${process.env.PUBLIC_PATH}src/src_nlprule-webworker_ts.bootstrap.js');`
       ],
       {'type': 'application/javascript'});
-    return new Worker(URL.createObjectURL(blob));
+    return new Worker(URL.createObjectURL(blob), {name: language});
   }
 }
 
-const nlpruleWorker = loadWorker();
+const languages = ['en', 'de'];
+const nlpruleWorkerByLanguage: Record<string, Worker> = {};
 
 enum Tabs {
   CorrectionsList = 'corrections',
@@ -59,6 +60,11 @@ interface ExtractionEvent {
   result: ExtractionResult;
 }
 
+interface CheckRequest {
+  text: string;
+  language: string;
+}
+
 function Sidebar() {
   const [removedCorrectionIDs, setRemovedCorrectionIDs] = createSignal(new Set<string>());
   const [corrections, setCorrections] = createSignal<Correction[]>([]);
@@ -67,6 +73,7 @@ function Sidebar() {
   const [selectedTab, setSelectedTab] = createSignal<string>(localStorage.getItem('wribe.sidebar.apps.selectedTab') || Tabs.CorrectionsList);
   const [appsStore, setAppsStore] = createStore<{ apps: App[] }>({apps: loadApps()});
   const [extractionEvent, setExtractionEvent] = createSignal<ExtractionEvent>();
+  let queuedCheckRequest: CheckRequest | undefined;
 
   createEffect(() => {
     localStorage.setItem('wribe.sidebar.apps.selectedTab', selectedTab());
@@ -91,7 +98,12 @@ function Sidebar() {
       });
 
       if (selectedTab() === Tabs.CorrectionsList) {
-        nlpruleWorker.postMessage({text: extractionResult.text, language: language});
+        const worker = nlpruleWorkerByLanguage[language];
+        if (worker) {
+          worker.postMessage({text: extractionResult.text});
+        } else {
+          queuedCheckRequest = {text: extractionResult.text, language};
+        }
       } else {
         setIsChecking(false);
         sendDummyCheckResultToPlugin();
@@ -141,14 +153,31 @@ function Sidebar() {
     });
   }
 
-  onMount(() => {
-    nlpruleWorker.onmessage = ({data: {eventType, corrections}}) => {
+  function loadNlpRuleWorkers(languageIndex = 0) {
+    const loadingLanguage = languages[languageIndex];
+    if (!loadingLanguage) {
+      return;
+    }
+    const loadingWorker = loadWorker(loadingLanguage);
+    loadingWorker.onmessage = ({data: {eventType, corrections}}) => {
       switch (eventType) {
+        case 'loaded':
+          nlpruleWorkerByLanguage[loadingLanguage] = loadingWorker;
+          if (queuedCheckRequest && nlpruleWorkerByLanguage[queuedCheckRequest.language]) {
+            nlpruleWorkerByLanguage[queuedCheckRequest.language].postMessage({text: queuedCheckRequest.text});
+            queuedCheckRequest = undefined;
+          }
+          loadNlpRuleWorkers(languageIndex + 1);
+          break
         case 'checkFinished':
           setIsChecking(false);
           onCheckResult(corrections);
       }
     };
+  }
+
+  onMount(() => {
+    loadNlpRuleWorkers();
     acrolinxPlugin.onInitFinished({});
   });
 

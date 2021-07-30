@@ -24,17 +24,15 @@ export interface Range {
 }
 
 self.onmessage = onMessage;
+self.postMessage({eventType: 'loaded'});
 
 console.time('Initialize nlprule');
-const nlpRuleCheckerEn = wasm.NlpRuleChecker.new();
-const nlpRuleCheckerDe = wasm.NlpRuleChecker.new_de();
+const nlpRuleChecker = self.name === 'en' ? wasm.NlpRuleChecker.new() : wasm.NlpRuleChecker.new_de();
 console.timeEnd('Initialize nlprule');
 
-function onMessage({data: {text, language}}: any) {
+function onMessage({data: {text}}: any) {
   console.time('Check');
-  const corrections: CorrectionFromWasm[] = language === 'en'
-    ? nlpRuleCheckerEn.check(text)
-    : nlpRuleCheckerDe.check(text);
+  const corrections: CorrectionFromWasm[] = nlpRuleChecker.check(text);
   console.timeEnd('Check');
 
   const correctionsResult: Correction[] = corrections.map((it, i) => ({
