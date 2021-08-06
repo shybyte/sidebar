@@ -1,6 +1,7 @@
 Doing:
 
 TODO:
+* Fix gmail bug
 * Speedup checking by using a cache
 * More apps in App Store
 * App Range Invalidation
@@ -8,6 +9,7 @@ TODO:
 * Display rule help links
 
 Done:
+* Logout
 * Try to optimize by putting different languages into different webworkers
 * German Checking
 * Language Detection

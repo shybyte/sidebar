@@ -19,6 +19,7 @@ import {AnalysisType, App, AppConfig, AppRange, AppRangeWithReplacement} from '.
 import {AppsManager} from './apps/AppsManager';
 import {CheckIcon} from './components/CheckIcon'
 import {ExtensionIcon} from './components/ExtensionIcon';
+import {LogoutIcon} from './components/LogoutIcon';
 import {CorrectionsList} from './CorrectionsList';
 import {ExtractionResult, extractTextFromHtml} from './html-extraction';
 import './index.css';
@@ -27,7 +28,6 @@ import {createMessageAdapter} from './message-adapter';
 import {Correction, Range} from './nlprule-webworker';
 import {mapExtractedRangeToOriginal} from './range-mapping';
 import './Sidebar.css';
-import {waitMs} from './utils';
 
 
 function loadWorker(language: string) {
@@ -73,6 +73,8 @@ function Sidebar() {
   const [selectedTab, setSelectedTab] = createSignal<string>(localStorage.getItem('wribe.sidebar.apps.selectedTab') || Tabs.CorrectionsList);
   const [appsStore, setAppsStore] = createStore<{ apps: App[] }>({apps: loadApps()});
   const [extractionEvent, setExtractionEvent] = createSignal<ExtractionEvent>();
+  const [initParameters, setInitParameters] = createSignal<InitParameters>({});
+
   let queuedCheckRequest: CheckRequest | undefined;
 
   createEffect(() => {
@@ -114,8 +116,9 @@ function Sidebar() {
     configure(configuration: SidebarConfiguration): void {
     },
 
-    init(initParameters: InitParameters): void {
-      console.log('initParameters', initParameters);
+    init(initParametersArg: InitParameters): void {
+      console.log('initParameters', initParametersArg);
+      setInitParameters(initParametersArg);
     },
 
     invalidateRanges(invalidCheckedDocumentRanges: InvalidDocumentPart[]): void {
@@ -294,6 +297,17 @@ function Sidebar() {
             aria-selected={selectedTab() === Tabs.AppsManager}
             title="Add & Manage Apps"
           ><ExtensionIcon/></button>
+
+          <Show when={initParameters().supported?.showServerSelector}>
+            <button
+              onClick={() => {
+                acrolinxPlugin.showServerSelector!();
+              }}
+              title="Logout"
+            >
+              <LogoutIcon/>
+            </button>
+          </Show>
         </div>
 
         <Show
