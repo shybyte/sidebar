@@ -20,13 +20,13 @@ import {AppsManager} from './apps/AppsManager';
 import {CheckIcon} from './components/CheckIcon'
 import {ExtensionIcon} from './components/ExtensionIcon';
 import {LogoutIcon} from './components/LogoutIcon';
-import {CorrectionsList} from './CorrectionsList';
-import {ExtractionResult, extractTextFromHtml} from './html-extraction';
+import {CorrectionsList} from './corrections-page/CorrectionsList';
+import {ExtractionResult, extractTextFromHtml} from './text-extraction/html-extraction';
 import './index.css';
-import {detectLanguage, LanguageCodeIso1} from './language-detection';
+import {detectLanguage, LanguageCodeIso1} from './utils/language-detection';
 import {createMessageAdapter} from './message-adapter';
 import {Correction, Range} from './nlprule-webworker';
-import {mapExtractedRangeToOriginal} from './range-mapping';
+import {mapExtractedRangeToOriginal} from './text-extraction/range-mapping';
 import './Sidebar.css';
 
 

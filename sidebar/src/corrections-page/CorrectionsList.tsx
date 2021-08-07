@@ -2,7 +2,7 @@ import {For, onMount} from 'solid-js';
 
 import './CorrectionsList.css'
 
-import {Correction} from './nlprule-webworker';
+import {Correction} from '../nlprule-webworker';
 
 interface CorrectionsListProps {
   corrections: Correction[];

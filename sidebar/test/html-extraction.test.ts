@@ -1,4 +1,4 @@
-import {extractTextFromHtml} from '../src/html-extraction';
+import {extractTextFromHtml} from '../src/text-extraction/html-extraction';
 
 describe('extractHtml', () => {
   it('simple', () => {

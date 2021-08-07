@@ -1,5 +1,5 @@
 import {createEffect, onCleanup} from 'solid-js'
-import {LanguageCodeIso1} from '../language-detection';
+import {LanguageCodeIso1} from '../utils/language-detection';
 import './AppPage.css';
 import {
   AnalysisResult,
