@@ -88,7 +88,7 @@ function Sidebar() {
         options.inputFormat === 'HTML' ||
         (documentContent.startsWith('<!DOCTYPE browserHtmlAcrolinx') && options.inputFormat === 'AUTO')
       )
-        ? extractTextFromHtml(documentContent)
+        ? extractTextFromHtml(documentContent, options.requestDescription?.documentReference)
         : {text: documentContent};
       console.log('extractionResult', extractionResult);
 

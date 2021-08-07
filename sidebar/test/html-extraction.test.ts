@@ -37,5 +37,17 @@ describe('extractHtml', () => {
       }
     ]);
   });
+
+  it('with extraction profile', () => {
+    const extractionResult = extractTextFromHtml(`
+      <div original-name="at" original-source="input" original-display="hidden">
+        AF6bupO8UJWG4zobdqvTE9f9Dxo4TxQjvA
+      </div>
+      <div>
+        This is a test.
+      </div>
+    `, 'https://mail.google.com/mail/u/0/#inbox?compose=Cllg');
+    expect(extractionResult.text.trim()).toEqual('This is a test.');
+  });
 });
 
